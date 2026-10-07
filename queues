@@ -1,0 +1,27 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
+typedef struct {
+    List items;
+} Queue;
+
+void queue_init(Queue *q) { list_init(&q->items); }
+
+int queue_is_empty(const Queue *q) { return q->items.size == 0; }
+
+void queue_enqueue(Queue *q, int x) { list_append(&q->items, x); }
+
+int queue_peek(const Queue *q, int *out) {
+    if (queue_is_empty(q)) return 0;
+    *out = q->items.head->value;
+    return 1;
+}
+
+int queue_dequeue(Queue *q, int *out) {
+    return list_remove_head(&q->items, out);
+}
+
+void queue_free(Queue *q) { list_free(&q->items); 
