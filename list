@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Node {
+    int value;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node *head;
+    Node *tail;
+    int size;
+} List;
+
+void list_init(List *l) {
+    l->head = NULL;
+    l->tail = NULL;
+    l->size = 0;
+}
+
+/* Insertion en tête : O(1) */
+void list_insert_head(List *l, int x) {
+    Node *n = malloc(sizeof(Node));
+    if (!n) { perror("malloc"); exit(EXIT_FAILURE); }
+    n->value = x;
+    n->next = l->head;
+    l->head = n;
+    if (l->tail == NULL) l->tail = n;
+    l->size++;
+}
+
+/* Insertion en queue (append) : O(1) grâce à tail */
+void list_append(List *l, int x) {
+    Node *n = malloc(sizeof(Node));
+    if (!n) { perror("malloc"); exit(EXIT_FAILURE); }
+    n->value = x;
+    n->next = NULL;
+    if (l->tail == NULL) {
+        l->head = n;
+    } else {
+        l->tail->next = n;
+    }
+    l->tail = n;
+    l->size++;
+}
+
+/* Suppression en tête : O(1). Retourne 1 si OK, 0 si liste vide */
+int list_remove_head(List *l, int *out) {
+    if (l->head == NULL) return 0;
+    Node *n = l->head;
+    if (out) *out = n->value;
+    l->head = n->next;
+    if (l->head == NULL) l->tail = NULL;
+    free(n);
+    l->size--;
+    return 1;
+}
+
+/* Suppression de la première occurrence de x : O(n) */
+int list_remove_value(List *l, int x) {
+    Node *prev = NULL, *cur = l->head;
+    while (cur != NULL && cur->value != x) {
+        prev = cur;
+        cur = cur->next;
+    }
+    if (cur == NULL) return 0;
+    if (prev == NULL) l->head = cur->next;
+    else prev->next = cur->next;
+    if (cur == l->tail) l->tail = prev;
+    free(cur);
+    l->size--;
+    return 1;
+}
+
+/* Recherche : O(n) */
+int list_search(const List *l, int x) {
+    for (Node *cur = l->head; cur != NULL; cur = cur->next)
+        if (cur->value == x) return 1;
+    return 0;
+}
+
+/* Lecture / affichage : O(n) */
+void list_print(const List *l) {
+    printf("[");
+    for (Node *cur = l->head; cur != NULL; cur = cur->next)
+        printf("%d%s", cur->value, cur->next ? " -> " : "");
+    printf("]\n");
+}
+
+void list_free(List *l) {
+    while (list_remove_head(l, NULL)) { }
+}
