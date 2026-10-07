@@ -1,0 +1,44 @@
+typedef struct {
+    int *data;
+    int max_size;   /* N */
+    int size;       /* n */
+} Stack;
+
+void stack_init(Stack *s, int max_size) {
+    s->data = malloc(max_size * sizeof(int));
+    if (!s->data) { perror("malloc"); exit(EXIT_FAILURE); }
+    s->max_size = max_size;
+    s->size = 0;
+}
+
+int stack_is_empty(const Stack *s) { return s->size == 0; }
+int stack_is_full(const Stack *s)  { return s->size == s->max_size; }
+
+/* Push : O(1). Retourne 0 si pile pleine */
+int stack_push(Stack *s, int x) {
+    if (stack_is_full(s)) return 0;
+    s->data[s->size] = x;
+    s->size = s->size + 1;
+    return 1;
+}
+
+/* Peek : O(1). Retourne 0 si pile vide */
+int stack_peek(const Stack *s, int *out) {
+    if (stack_is_empty(s)) return 0;
+    *out = s->data[s->size - 1];
+    return 1;
+}
+
+/* Pop : O(1). Retourne 0 si pile vide */
+int stack_pop(Stack *s, int *out) {
+    if (stack_is_empty(s)) return 0;
+    *out = s->data[s->size - 1];
+    s->size = s->size - 1;
+    return 1;
+}
+
+void stack_free(Stack *s) {
+    free(s->data);
+    s->data = NULL;
+    s->size = s->max_size = 0;
+}
