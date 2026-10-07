@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
+typedef struct Entry {
+    char *key;
+    char *value;
+    struct Entry *next;
+} Entry;
+
+typedef struct {
+    Entry **buckets;
+    int size;       /* nombre de cases du tableau */
+    int count;      /* nombre de paires stockées */
+} HashTable;
+
+static char *str_dup(const char *s) {
+    char *d = malloc(strlen(s) + 1);
+    if (!d) { perror("malloc"); exit(EXIT_FAILURE); }
+    strcpy(d, s);
+    return d;
+}
+
+unsigned int hash(const char *key, int size) {
+    unsigned int sum = 0;
+    for (const char *c = key; *c != '\0'; c++)
+        sum += (unsigned char)*c;
+    return sum % size;
+}
+
+void ht_init(HashTable *ht, int size) {
+    ht->buckets = calloc(size, sizeof(Entry *));
+    if (!ht->buckets) { perror("calloc"); exit(EXIT_FAILURE); }
+    ht->size = size;
+    ht->count = 0;
+}
+
+/* Insertion / mise à jour : O(1) en moyenne */
+void ht_put(HashTable *ht, const char *key, const char *value) {
+    unsigned int idx = hash(key, ht->size);
+    for (Entry *e = ht->buckets[idx]; e != NULL; e = e->next) {
+        if (strcmp(e->key, key) == 0) {   /* clé déjà présente */
+            free(e->value);
+            e->value = str_dup(value);
+            return;
+        }
+    }
+    Entry *e = malloc(sizeof(Entry));     /* collision ou case vide */
+    if (!e) { perror("malloc"); exit(EXIT_FAILURE); }
+    e->key = str_dup(key);
+    e->value = str_dup(value);
+    e->next = ht->buckets[idx];
+    ht->buckets[idx] = e;
+    ht->count++;
+}
+
+/* Recherche : retourne NULL si la clé n'existe pas */
+const char *ht_get(const HashTable *ht, const char *key) {
+    unsigned int idx = hash(key, ht->size);
+    for (Entry *e = ht->buckets[idx]; e != NULL; e = e->next)
+        if (strcmp(e->key, key) == 0) return e->value;
+    return NULL;
+}
+
+/* Suppression : retourne 1 si supprimée, 0 sinon */
+int ht_delete(HashTable *ht, const char *key) {
+    unsigned int idx = hash(key, ht->size);
+    Entry *prev = NULL, *e = ht->buckets[idx];
+    while (e != NULL && strcmp(e->key, key) != 0) {
+        prev = e;
+        e = e->next;
+    }
+    if (e == NULL) return 0;
+    if (prev == NULL) ht->buckets[idx] = e->next;
+    else prev->next = e->next;
+    free(e->key);
+    free(e->value);
+    free(e);
+    ht->count--;
+    return 1;
+}
+
+void ht_print(const HashTable *ht) {
+    for (int i = 0; i < ht->size; i++) {
+        printf("[%d]", i);
+        for (Entry *e = ht->buckets[i]; e != NULL; e = e->next)
+            printf(" -> (%s : %s)", e->key, e->value);
+        printf("\n");
+    }
+}
+
+void ht_free(HashTable *ht) {
+    for (int i = 0; i < ht->size; i++) {
+        Entry *e = ht->buckets[i];
+        while (e != NULL) {
+            Entry *next = e->next;
+            free(e->key);
+            free(e->value);
+            free(e);
+            e = next;
+        }
+    }
+    free(ht->buckets);
+    ht->buckets = NULL;
+    ht->size = ht->count = 0;
